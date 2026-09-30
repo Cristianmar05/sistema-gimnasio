@@ -5,6 +5,7 @@ import com.gimnasio.modelo.Usuario;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.gimnasio.modelo.EstadoUsuario;
 
 /**
  * Implementación en memoria del repositorio de usuarios.

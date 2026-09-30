@@ -2,6 +2,7 @@ package com.gimnasio.repositorio;
 
 import com.gimnasio.modelo.Usuario;
 import java.util.List;
+import com.gimnasio.modelo.EstadoUsuario;
 
 /**
  * Interfaz de repositorio para la gestión de usuarios.

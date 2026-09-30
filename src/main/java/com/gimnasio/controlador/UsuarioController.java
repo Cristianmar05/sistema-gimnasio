@@ -5,7 +5,7 @@ import com.gimnasio.modelo.Rol;
 import com.gimnasio.modelo.Usuario;
 import com.gimnasio.repositorio.IUsuarioRepository;
 import com.gimnasio.vista.FrmUsuario;
-
+import com.gimnasio.modelo.EstadoUsuario;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
