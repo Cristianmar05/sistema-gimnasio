@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.regex.Pattern;
 
 /**
- * Controlador de la entidad Usuario.
+ * Controlador de la entidad Usuario.==
  * Aplica reglas de negocio, integridad de datos y control de acceso.
  * Desacoplado de la vista — implementa ActionListener y DIP con IUsuarioRepository.
  */
@@ -206,5 +206,9 @@ public class UsuarioController implements ActionListener {
     private void limpiar() {
         vista.limpiarBusqueda();
         vista.limpiarFicha();
+    }
+    
+    public boolean cambiarEstadoAfiliado(String documento, EstadoUsuario nuevoEstado) {
+        return repositorio.cambiarEstado(documento, nuevoEstado);
     }
 }

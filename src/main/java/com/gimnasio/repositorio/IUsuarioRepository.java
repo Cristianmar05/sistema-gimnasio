@@ -39,4 +39,7 @@ public interface IUsuarioRepository {
      * @return true si el documento ya está registrado, false en caso contrario
      */
     boolean existeDocumento(String documento);
+    
+    // Método para cambiar el estado del afiliado
+    boolean cambiarEstado(String documento, EstadoUsuario nuevoEstado);
 }

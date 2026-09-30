@@ -50,4 +50,14 @@ public class UsuarioRepositoryImpl implements IUsuarioRepository {
         return usuarios.stream()
                 .anyMatch(u -> u.getDocumento().equals(documento.trim()));
     }
+    
+    @Override
+    public boolean cambiarEstado(String documento, EstadoUsuario nuevoEstado) {
+        Usuario usuario = buscarPorDocumento(documento);
+        if (usuario != null) {
+            usuario.setEstado(nuevoEstado);
+            return true;
+        }
+        return false;
+    }
 }
