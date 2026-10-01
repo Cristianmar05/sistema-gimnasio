@@ -67,6 +67,7 @@ public class FrmUsuario extends JFrame {
     private JTextField txtDocBuscar;
     private JButton btnBuscar;
     private JButton btnLimpiar;
+    private JButton btnInactivar;
 
     // ==================== FICHA DE DATOS ====================
     private JLabel lblFichaDoc;
@@ -91,7 +92,7 @@ public class FrmUsuario extends JFrame {
     }
 
     private void configurarVentana() {
-        setTitle("GYM SYSTEM — Gestión de Afiliados");
+        setTitle(com.gimnasio.modelo.ConfiguracionGimnasio.NOMBRE_SEDE + " | Versión " + com.gimnasio.modelo.ConfiguracionGimnasio.VERSION_SISTEMA);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(940, 640);
         setMinimumSize(new Dimension(900, 600));
@@ -348,6 +349,8 @@ public class FrmUsuario extends JFrame {
         gbcBusq.gridx = 3;
         gbcBusq.insets = new Insets(0, 0, 0, 0);
         filaBusqueda.add(btnLimpiar, gbcBusq);
+        btnInactivar = crearBotonSecundario("Inactivar"); btnInactivar.setPreferredSize(new Dimension(95, 30)); gbcBusq.gridx = 4; gbcBusq.insets = new Insets(0, 6, 0, 0); filaBusqueda.add(btnInactivar, gbcBusq);
+
 
         panel.add(filaBusqueda, BorderLayout.NORTH);
 
@@ -726,6 +729,7 @@ public class FrmUsuario extends JFrame {
     public void addRegistrarListener(ActionListener listener) { btnRegistrar.addActionListener(listener); }
     public void addBuscarListener(ActionListener listener)    { btnBuscar.addActionListener(listener); }
     public void addLimpiarListener(ActionListener listener)   { btnLimpiar.addActionListener(listener); }
+    public void addInactivarListener(ActionListener listener) { btnInactivar.addActionListener(listener); }
     public void addRolListener(ActionListener listener)       { cmbRol.addActionListener(listener); }
 
     /**

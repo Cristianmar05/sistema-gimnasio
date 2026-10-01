@@ -1,6 +1,6 @@
 package com.gimnasio.controlador;
 
-import com.gimnasio.modelo.EstadoUsuario;
+
 import com.gimnasio.modelo.Rol;
 import com.gimnasio.modelo.Usuario;
 import com.gimnasio.repositorio.IUsuarioRepository;
@@ -46,6 +46,7 @@ public class UsuarioController implements ActionListener {
         vista.addRegistrarListener(this);
         vista.addBuscarListener(this);
         vista.addLimpiarListener(this);
+        vista.addInactivarListener(e -> inactivarAfiliado());
         vista.addRolListener(e -> vista.ajustarCamposSegunRol());
     }
 
@@ -211,4 +212,6 @@ public class UsuarioController implements ActionListener {
     public boolean cambiarEstadoAfiliado(String documento, EstadoUsuario nuevoEstado) {
         return repositorio.cambiarEstado(documento, nuevoEstado);
     }
+    private void inactivarAfiliado() { String documento = vista.getDocumentoBuscar().trim(); if (documento.isEmpty()) { vista.mostrarAlertaAdvertencia( "Ingresa el documento en la barra de búsqueda.", "Atención" ); return; } boolean exito = repositorio.cambiarEstado( documento, EstadoUsuario.INACTIVO ); if (exito) { vista.mostrarAlertaExito( "Estado del afiliado actualizado a INACTIVO.", "Operación Exitosa" ); Usuario usuario = repositorio.buscarPorDocumento(documento); if (usuario != null) { vista.mostrarFichaUsuario(usuario); } } else { vista.mostrarAlertaError( "No se encontró ningún afiliado con el documento: " + documento, "Error" ); } }
+
 }
