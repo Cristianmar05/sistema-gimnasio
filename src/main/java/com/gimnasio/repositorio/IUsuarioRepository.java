@@ -23,6 +23,7 @@ public interface IUsuarioRepository {
      *
      * @param documento Número de documento a buscar
      * @return El usuario encontrado, o null si no existe
+     * FOrmulario
      */
     Usuario buscarPorDocumento(String documento);
 
