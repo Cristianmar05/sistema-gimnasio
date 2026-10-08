@@ -1,3 +1,4 @@
+// Lógica de reactivación y renovación contextual de afiliados
 package com.gimnasio.vista;
 
 import com.formdev.flatlaf.FlatClientProperties;
