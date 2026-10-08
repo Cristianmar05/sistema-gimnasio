@@ -1,7 +1,7 @@
 package com.gimnasio.modelo;
 
 /**
- * Enum que representa los planes de membresía disponibles.
+ * Enum que representa los planes de membresía disponibles..
  */
 public enum PlanMembresia {
     DIARIO("Diario"),
