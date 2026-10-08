@@ -248,7 +248,7 @@ public class FrmUsuario extends JFrame {
 
         int fila = 0;
 
-        txtDocumento = crearCampoTexto(15, "Ej. 1005234678");
+        txtDocumento = crearCampoTexto(15, "Ej. 1005234676");
         agregarFiltroDigitos(txtDocumento);
         agregarCampo(campos, gbc, fila++, "Documento", txtDocumento, "/iconos/documento.png");
 
@@ -793,6 +793,7 @@ public class FrmUsuario extends JFrame {
         panelFicha.revalidate();
         panelFicha.repaint();
     }
+    //Maquetacion de tabla y filtros).
 
     public void limpiarFicha() {
         lblFichaDoc.setText("—");
@@ -852,4 +853,5 @@ public class FrmUsuario extends JFrame {
     public void setMensajeAdvertencia(String msg) {
         JOptionPane.showMessageDialog(this, msg, "Atención", JOptionPane.WARNING_MESSAGE);
     }
+    
 }
