@@ -1,6 +1,6 @@
 package com.gimnasio.controlador;
 
-
+// Validaciones y casos de prueba para el ciclo CRUD
 import com.gimnasio.modelo.Rol;
 import com.gimnasio.modelo.Usuario;
 import com.gimnasio.repositorio.IUsuarioRepository;
