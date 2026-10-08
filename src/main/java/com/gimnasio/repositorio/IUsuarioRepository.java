@@ -44,4 +44,15 @@ public interface IUsuarioRepository {
     
     // Método para cambiar el estado del afiliado
     boolean cambiarEstado(String documento, EstadoUsuario nuevoEstado);
+
+    /**
+     * Actualiza la información de un usuario existente.
+     *
+     * @param usuario Usuario con los datos actualizados
+     * @return true si se actualizó, false en caso contrario
+     */
+    boolean actualizar(Usuario usuario);
+
+    // Método eliminar físicamente retirado por auditoría. 
+    // Usar exclusivamente cambiarEstado para Soft Delete.
 }

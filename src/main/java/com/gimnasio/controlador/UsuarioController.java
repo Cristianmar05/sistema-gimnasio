@@ -36,18 +36,24 @@ public class UsuarioController implements ActionListener {
     public UsuarioController(FrmUsuario vista, IUsuarioRepository repositorio) {
         this.vista = vista;
         this.repositorio = repositorio;
-        registrarListeners();
-        
-        // Ajusta el menú de membresía según el rol por defecto
-        vista.ajustarCamposSegunRol(); 
+        if(vista != null) {
+            registrarListeners();
+            vista.ajustarCamposSegunRol(); 
+        }
+    }
+
+    public FrmUsuario getVista() {
+        return vista;
     }
 
     private void registrarListeners() {
         vista.addRegistrarListener(this);
         vista.addBuscarListener(this);
         vista.addLimpiarListener(this);
-        vista.addInactivarListener(e -> inactivarAfiliado());
+        vista.addInactivarListener(e -> alternarEstadoAfiliado());
         vista.addRolListener(e -> vista.ajustarCamposSegunRol());
+        vista.addEditarListener(e -> editarAfiliado());
+        vista.addDirectorioListener(e -> abrirDirectorio());
     }
 
     @Override
@@ -65,6 +71,20 @@ public class UsuarioController implements ActionListener {
     // ================================================================
     //  LÓGICA DE REGISTRO CON VALIDACIONES ROBUSTAS
     // ================================================================
+
+    public static LocalDate calcularVencimiento(LocalDate fechaInicio, com.gimnasio.modelo.PlanMembresia plan) {
+        if (plan == null) return fechaInicio.plusDays(30);
+        switch (plan) {
+            case DIARIO: return fechaInicio;
+            case MENSUAL:
+            case BASICA: return fechaInicio.plusDays(30);
+            case TRIMESTRAL: return fechaInicio.plusDays(90);
+            case SEMESTRAL: return fechaInicio.plusDays(180);
+            case ANUAL:
+            case VIP: return fechaInicio.plusYears(1);
+            default: return fechaInicio.plusDays(30);
+        }
+    }
 
     private void registrarUsuario() {
         String documento = vista.getDocumento().trim();
@@ -123,15 +143,23 @@ public class UsuarioController implements ActionListener {
                 return;
             }
 
+            Rol rolSeleccionado = vista.getRolSeleccionado();
+            LocalDate fechaRegistro = LocalDate.now();
+            LocalDate fechaVencimiento = null;
+            if (rolSeleccionado == Rol.CLIENTE) {
+                fechaVencimiento = calcularVencimiento(fechaRegistro, vista.getPlanSeleccionado());
+            }
+
             Usuario nuevoUsuario = new Usuario(
                     documento,
                     nombre,
                     telefono,
                     correo,
-                    vista.getRolSeleccionado(),
+                    rolSeleccionado,
                     vista.getPlanSeleccionado(),
                     EstadoUsuario.ACTIVO,
-                    LocalDate.now()
+                    fechaRegistro,
+                    fechaVencimiento
             );
 
             repositorio.registrar(nuevoUsuario);
@@ -173,7 +201,9 @@ public class UsuarioController implements ActionListener {
                 vista.limpiarFicha();
                 vista.setMensajeAdvertencia("No se encontró ningún afiliado con documento: " + documento);
             } else {
-                vista.mostrarFichaUsuario(encontrado);
+                verificarVencimientoAuto(encontrado);
+
+                vista.actualizarFichaCompleta(encontrado);
                 
                 // Control de Acceso: Evaluación del Estado
                 if (encontrado.getEstado() != EstadoUsuario.ACTIVO) {
@@ -200,6 +230,15 @@ public class UsuarioController implements ActionListener {
         }
     }
 
+    public void verificarVencimientoAuto(Usuario u) {
+        if (u.getRol() == Rol.CLIENTE) {
+            if (u.getDiasRestantes() < 0 && u.getEstado() == EstadoUsuario.ACTIVO) {
+                u.setEstado(EstadoUsuario.INACTIVO);
+                repositorio.cambiarEstado(u.getDocumento(), EstadoUsuario.INACTIVO);
+            }
+        }
+    }
+
     // ================================================================
     //  LIMPIAR
     // ================================================================
@@ -208,10 +247,148 @@ public class UsuarioController implements ActionListener {
         vista.limpiarBusqueda();
         vista.limpiarFicha();
     }
-    
-    public boolean cambiarEstadoAfiliado(String documento, EstadoUsuario nuevoEstado) {
-        return repositorio.cambiarEstado(documento, nuevoEstado);
+    private void alternarEstadoAfiliado() {
+        alternarEstadoAfiliado(vista.getDocumentoBuscar().trim(), vista);
     }
-    private void inactivarAfiliado() { String documento = vista.getDocumentoBuscar().trim(); if (documento.isEmpty()) { vista.mostrarAlertaAdvertencia( "Ingresa el documento en la barra de búsqueda.", "Atención" ); return; } boolean exito = repositorio.cambiarEstado( documento, EstadoUsuario.INACTIVO ); if (exito) { vista.mostrarAlertaExito( "Estado del afiliado actualizado a INACTIVO.", "Operación Exitosa" ); Usuario usuario = repositorio.buscarPorDocumento(documento); if (usuario != null) { vista.mostrarFichaUsuario(usuario); } } else { vista.mostrarAlertaError( "No se encontró ningún afiliado con el documento: " + documento, "Error" ); } }
 
+    public void alternarEstadoAfiliado(String documento, java.awt.Component parent) {
+        if (documento.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(parent, "Ingresa el documento válido.", "Atención", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Usuario usuario = repositorio.buscarPorDocumento(documento);
+        if (usuario == null) {
+            javax.swing.JOptionPane.showMessageDialog(parent, "No se encontró ningún afiliado con el documento: " + documento, "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (usuario.getRol() == Rol.CLIENTE) {
+            if (usuario.getEstado() == EstadoUsuario.ACTIVO && (usuario.getFechaVencimiento() == null || !java.time.LocalDate.now().isAfter(usuario.getFechaVencimiento()))) {
+                if (com.gimnasio.modelo.SesionContext.esAdmin()) {
+                    usuario.setEstado(EstadoUsuario.INACTIVO);
+                    repositorio.cambiarEstado(documento, EstadoUsuario.INACTIVO);
+                    if (vista != null && documento.equals(vista.getDocumentoBuscar().trim())) {
+                        vista.actualizarFichaCompleta(usuario);
+                    }
+                    javax.swing.JOptionPane.showMessageDialog(parent != null ? parent : vista, "Cliente inactivado manualmente.", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(parent != null ? parent : vista, "Acceso denegado: Solo el Administrador puede inactivar clientes manualmente.", "Permisos Insuficientes", javax.swing.JOptionPane.WARNING_MESSAGE);
+                }
+            } else if (usuario.getEstado() == EstadoUsuario.INACTIVO && (usuario.getFechaVencimiento() == null || !java.time.LocalDate.now().isAfter(usuario.getFechaVencimiento()))) {
+                usuario.setEstado(EstadoUsuario.ACTIVO);
+                repositorio.cambiarEstado(documento, EstadoUsuario.ACTIVO);
+                if (vista != null && documento.equals(vista.getDocumentoBuscar().trim())) {
+                    vista.actualizarFichaCompleta(usuario);
+                }
+                javax.swing.JOptionPane.showMessageDialog(parent != null ? parent : vista, "Cliente reactivado correctamente.", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                renovarMembresia(documento, parent);
+            }
+        } else {
+            if (!com.gimnasio.modelo.SesionContext.esAdmin()) {
+                javax.swing.JOptionPane.showMessageDialog(parent, "Acceso denegado: Solo el Administrador puede modificar personal STAFF.", "Permisos Insuficientes", javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            alternarEstadoStaff(documento, parent);
+        }
+    }
+
+    public void renovarMembresia(String documento, java.awt.Component parent) {
+        Usuario usuario = repositorio.buscarPorDocumento(documento);
+        if (usuario == null) return;
+
+        LocalDate inicio = LocalDate.now();
+        usuario.setFechaVencimiento(calcularVencimiento(inicio, usuario.getPlanMembresia()));
+        usuario.setEstado(EstadoUsuario.ACTIVO);
+
+        if (repositorio.actualizar(usuario)) {
+            javax.swing.JOptionPane.showMessageDialog(parent != null ? parent : vista, "Membresía renovada exitosamente.", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            if (vista.getDocumentoBuscar().trim().equals(documento)) {
+                vista.actualizarFichaCompleta(usuario);
+            }
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(parent != null ? parent : vista, "Error al renovar la membresía.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void renovarMembresia(String documento) {
+        renovarMembresia(documento, vista);
+    }
+
+    public void alternarEstadoStaff(String documento, java.awt.Component parent) {
+        Usuario usuario = repositorio.buscarPorDocumento(documento);
+        if (usuario == null) return;
+
+        EstadoUsuario nuevoEstado = (usuario.getEstado() == EstadoUsuario.ACTIVO) ? EstadoUsuario.INACTIVO : EstadoUsuario.ACTIVO;
+        boolean exito = repositorio.cambiarEstado(documento, nuevoEstado);
+
+        if (exito) {
+            usuario.setEstado(nuevoEstado);
+            if (vista.getDocumentoBuscar().trim().equals(documento)) {
+                vista.actualizarFichaCompleta(usuario);
+            }
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(parent != null ? parent : vista, "Error al cambiar estado del staff.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void alternarEstadoStaff(String documento) {
+        alternarEstadoStaff(documento, vista);
+    }
+
+    private void editarAfiliado() {
+        editarAfiliado(vista.getDocumentoBuscar().trim(), vista);
+    }
+
+    public void editarAfiliado(String documento, java.awt.Component parent) {
+        if (documento.isEmpty()) return;
+        Usuario usuario = repositorio.buscarPorDocumento(documento);
+        if (usuario != null) {
+            java.awt.Frame frameParent = parent instanceof java.awt.Frame ? (java.awt.Frame) parent : vista;
+            Runnable onActualizar = () -> {
+                Usuario actualizado = repositorio.buscarPorDocumento(documento);
+                if (actualizado != null) {
+                    verificarVencimientoAuto(actualizado);
+                    if (vista.getDocumentoBuscar().trim().equals(documento)) {
+                        vista.actualizarFichaCompleta(actualizado);
+                    }
+                }
+            };
+            com.gimnasio.vista.DlgEditarAfiliado dlg = new com.gimnasio.vista.DlgEditarAfiliado(frameParent, usuario, repositorio, this, onActualizar);
+            dlg.setLocationRelativeTo(parent);
+            dlg.setVisible(true);
+        }
+    }
+
+    // Métodos de eliminación física retirados por auditoría.
+
+    private void abrirDirectorio() {
+        vista.abrirDirectorio(repositorio, this);
+    }
+
+    public boolean actualizarAfiliado(String documento, String nombre, String telefono, String correo, String rolStr, String planStr) {
+        Usuario usuario = repositorio.buscarPorDocumento(documento);
+        if (usuario == null) return false;
+
+        com.gimnasio.modelo.PlanMembresia planAnterior = usuario.getPlanMembresia();
+        com.gimnasio.modelo.PlanMembresia nuevoPlan = com.gimnasio.modelo.PlanMembresia.parse(planStr);
+        com.gimnasio.modelo.Rol nuevoRol = com.gimnasio.modelo.Rol.parse(rolStr);
+        
+        usuario.setNombre(nombre);
+        usuario.setTelefono(telefono);
+        usuario.setCorreo(correo);
+        usuario.setPlanMembresia(nuevoPlan);
+        usuario.setRol(nuevoRol);
+
+        if (usuario.getRol() == Rol.CLIENTE) {
+            if (nuevoPlan != planAnterior) {
+                // Jamás sumar a fechas anteriores si el plan cambia. Se calcula desde HOY.
+                usuario.setFechaVencimiento(calcularVencimiento(java.time.LocalDate.now(), nuevoPlan));
+            }
+        } else {
+            usuario.setFechaVencimiento(null);
+        }
+
+        return repositorio.actualizar(usuario);
+    }
 }

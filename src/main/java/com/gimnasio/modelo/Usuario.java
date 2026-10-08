@@ -18,6 +18,7 @@ public class Usuario {
     private PlanMembresia planMembresia;
     private EstadoUsuario estado;
     private LocalDate fechaRegistro;
+    private LocalDate fechaVencimiento;
 
     /**
      * Constructor completo para crear un usuario con todos sus atributos.
@@ -30,10 +31,11 @@ public class Usuario {
      * @param planMembresia Plan de membresía seleccionado
      * @param estado        Estado del usuario (Activo o Inactivo)
      * @param fechaRegistro Fecha de registro en el sistema
+     * @param fechaVencimiento Fecha de vencimiento de la membresía (null para staff)
      */
     public Usuario(String documento, String nombre, String telefono, String correo,
                    Rol rol, PlanMembresia planMembresia, EstadoUsuario estado,
-                   LocalDate fechaRegistro) {
+                   LocalDate fechaRegistro, LocalDate fechaVencimiento) {
         this.documento = documento;
         this.nombre = nombre;
         this.telefono = telefono;
@@ -42,6 +44,13 @@ public class Usuario {
         this.planMembresia = planMembresia;
         this.estado = estado;
         this.fechaRegistro = fechaRegistro;
+        this.fechaVencimiento = fechaVencimiento;
+    }
+    
+    public Usuario(String documento, String nombre, String telefono, String correo,
+                   Rol rol, PlanMembresia planMembresia, EstadoUsuario estado,
+                   LocalDate fechaRegistro) {
+        this(documento, nombre, telefono, correo, rol, planMembresia, estado, fechaRegistro, null);
     }
 
     // ==================== GETTERS ====================
@@ -77,6 +86,10 @@ public class Usuario {
     public LocalDate getFechaRegistro() {
         return fechaRegistro;
     }
+    
+    public LocalDate getFechaVencimiento() {
+        return fechaVencimiento;
+    }
 
     /**
      * Retorna la fecha de registro formateada como dd/MM/yyyy.
@@ -86,6 +99,18 @@ public class Usuario {
             return "N/A";
         }
         return fechaRegistro.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+    
+    public String getFechaVencimientoFormateada() {
+        if (fechaVencimiento == null) {
+            return "N/A";
+        }
+        return fechaVencimiento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+    
+    public long getDiasRestantes() {
+        if (fechaVencimiento == null) return 0;
+        return java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), fechaVencimiento);
     }
 
     // ==================== SETTERS ====================
@@ -120,6 +145,10 @@ public class Usuario {
 
     public void setFechaRegistro(LocalDate fechaRegistro) {
         this.fechaRegistro = fechaRegistro;
+    }
+    
+    public void setFechaVencimiento(LocalDate fechaVencimiento) {
+        this.fechaVencimiento = fechaVencimiento;
     }
 
     @Override

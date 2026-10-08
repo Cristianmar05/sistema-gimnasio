@@ -21,16 +21,11 @@ public class SistemaGimnasio {
 
         // Lanzar la aplicación en el Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(() -> {
-            // Crear la capa de persistencia (DIP: se inyecta la implementación concreta)
-            IUsuarioRepository repositorio = new UsuarioRepositoryImpl();
-
-            // Crear la vista
+            com.gimnasio.modelo.SesionContext.setUsuarioActual("recepcion", com.gimnasio.modelo.SesionContext.RolAcceso.RECEPCIONISTA);
             FrmUsuario vista = new FrmUsuario();
-
-            // Crear el controlador e inyectar dependencias
+            IUsuarioRepository repositorio = new com.gimnasio.repositorio.UsuarioRepositoryJDBC();
             new UsuarioController(vista, repositorio);
-
-            // Mostrar la ventana
+            vista.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
             vista.setVisible(true);
         });
     }
